@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthenticationController;
 use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\MessageController;
 
 Route::post('register', [AuthenticationController::class, 'register'])->name('register');
 Route::post('login', [AuthenticationController::class, 'login'])->name('login');
@@ -16,4 +17,5 @@ Route::middleware('auth:api')->group(function () {
     Route::post('new-conversation', [ConversationController::class, 'newconversation'])->name('new-conversation');
     Route::get('get-conversations', [ConversationController::class, 'getConversations'])->name('get-conversations');
     Route::get('get-messages/{id}', [ConversationController::class, 'getMessages'])->name('get-messages');
+    Route::post('send-message', [MessageController::class, 'sendMessage'])->name('send-message');
 });

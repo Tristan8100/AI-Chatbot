@@ -34,7 +34,7 @@ class ConversationController extends Controller
 
     public function getMessages($id)
     {
-        $value = Conversation::find($id);
+        $value = Conversation::where('id', $id)->where('user_id', Auth::user()->id)->first();
         return response()->json([
             'response_code' => 200,
             'status'        => 'success',

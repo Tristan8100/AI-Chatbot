@@ -8,7 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Prism\Prism\Prism;
 use Prism\Prism\Enums\Provider;
-
+use Prism\Prism\ValueObjects\Messages\UserMessage;
+use Prism\Prism\ValueObjects\Messages\AssistantMessage;
+use Prism\Prism\Facades\Tool;
 class MessageController extends Controller
 {
     public function sendMessage(Request $request)
@@ -36,16 +38,22 @@ class MessageController extends Controller
         ->reverse()
         ->values();
 
-        $conversationText = $messagesSorted  
-        ->map(fn($msg) => ucfirst($msg->sender) . ': ' . $msg->message)
-        ->implode("\n");
+        $structuredMessages = $messagesSorted->map(function ($msg) {
+            return $msg->sender === 'user'
+                ? new UserMessage($msg->message)
+                : new AssistantMessage($msg->message);
+        })->toArray();
 
         //ai response here
         try {
             $responseAI = Prism::text()
                 ->using(Provider::Gemini, 'gemini-1.5-flash')
-                ->withSystemPrompt('previous message, use that as a basis to remember your conversation: ' . $conversationText)
-                ->withPrompt($request->message)
+                ->withMaxSteps(2)
+                ->withSystemPrompt('you are his bro bestfriend')
+                ->withMessages([
+                    ...$structuredMessages,
+                    new UserMessage($request->message),
+                ])
                 ->asText();
 
             Message::create([
@@ -64,6 +72,7 @@ class MessageController extends Controller
                 'status' => 'success',
                 'response' => $responseAI->text,
             ]);
+            
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',

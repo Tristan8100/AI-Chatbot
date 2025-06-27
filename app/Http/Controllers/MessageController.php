@@ -18,7 +18,7 @@ class MessageController extends Controller
         //this will be created when new or existing conversation is intiated
         $request->validate([
             'conversation_id' => 'required|exists:conversations,id',
-            'message'         => 'required|string|max:500',
+            'message'         => 'required|string|max:1000',
         ]);
 
         $value = Conversation::with('messages')->where('user_id', Auth::user()->id)->where('id', $request->conversation_id)->first();
@@ -44,16 +44,35 @@ class MessageController extends Controller
                 : new AssistantMessage($msg->message);
         })->toArray();
 
-        //ai response here
+        $weatherTool = Tool::as('weather')
+        ->for('Get current weather conditions')
+        ->withStringParameter('city', 'The city to get weather for')
+        ->using(function (string $city): string {
+            // Your weather API logic here
+            return "The weather in {$city} is sunny and 72°F.";
+        });
+
+        $userInfoTool = Tool::as('userInfo')  // tool name, all lowercase recommended
+        ->for('Get authenticated user information')
+        ->withStringParameter('user', 'The user to get information for')
+        ->using(function (string $user): string {
+            $user = Auth::user();
+            if (!$user) {
+                return 'No user is logged in.';
+            }
+            return "The user's name is {$user->name} and email is {$user->email}.";
+        });
+
         try {
             $responseAI = Prism::text()
-                ->using(Provider::Gemini, 'gemini-1.5-flash')
-                ->withMaxSteps(2)
-                ->withSystemPrompt('you are his bro bestfriend')
+                ->using(Provider::Groq, 'qwen-qwq-32b')
+                ->withSystemPrompt('You are his bro bestfriend')
                 ->withMessages([
                     ...$structuredMessages,
-                    new UserMessage($request->message),
+                    new UserMessage($request->message), // should say something like: "Can you show my user info?"
                 ])
+                ->withTools([$weatherTool, $userInfoTool])
+                ->withMaxSteps(5) // <-- this matters!
                 ->asText();
 
             Message::create([
@@ -71,6 +90,8 @@ class MessageController extends Controller
             return response()->json([
                 'status' => 'success',
                 'response' => $responseAI->text,
+                'tools' => $userInfoTool,
+                'structuredMessages' => $structuredMessages
             ]);
             
         } catch (\Exception $e) {

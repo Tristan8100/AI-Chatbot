@@ -44,15 +44,14 @@ class MessageController extends Controller
                 : new AssistantMessage($msg->message);
         })->toArray();
 
-        $weatherTool = Tool::as('weather')
+        $weatherTool = Tool::as('weather') //mock tools from documentation
         ->for('Get current weather conditions')
         ->withStringParameter('city', 'The city to get weather for')
         ->using(function (string $city): string {
-            // Your weather API logic here
             return "The weather in {$city} is sunny and 72°F.";
         });
 
-        $userInfoTool = Tool::as('userInfo')  // tool name, all lowercase recommended
+        $userInfoTool = Tool::as('userInfo')
         ->for('Get authenticated user information')
         ->withStringParameter('user', 'The user to get information for')
         ->using(function (string $user): string {
@@ -66,13 +65,13 @@ class MessageController extends Controller
         try {
             $responseAI = Prism::text()
                 ->using(Provider::Groq, 'qwen-qwq-32b')
-                ->withSystemPrompt('You are his bro bestfriend')
+                ->withSystemPrompt('You are his friend, dont be mean and you should bre friendly and speak humanly, dont speak like an AI')
                 ->withMessages([
                     ...$structuredMessages,
-                    new UserMessage($request->message), // should say something like: "Can you show my user info?"
+                    new UserMessage($request->message),
                 ])
                 ->withTools([$weatherTool, $userInfoTool])
-                ->withMaxSteps(5) // <-- this matters!
+                ->withMaxSteps(5)
                 ->asText();
 
             Message::create([

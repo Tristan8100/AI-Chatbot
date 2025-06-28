@@ -60,6 +60,10 @@ class AuthenticationController extends Controller
         try {
             if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
                 $user        = Auth::user();
+                if (!$user->email_verified_at) {
+                    return response()->json(['message' => 'Verify email first.'], 403);
+                }
+
                 $accessToken = $user->createToken('authToken')->accessToken;
 
                 return response()->json([

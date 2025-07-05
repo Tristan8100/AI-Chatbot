@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use Carbon\Carbon;
+use App\Models\EmailVerification;
+use Illuminate\Support\Facades\Mail;
 
 class AuthenticationController extends Controller
 {
@@ -30,11 +32,29 @@ class AuthenticationController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        return response()->json([
-            'response_code' => 201,
-            'status'        => 'success',
-            'message'       => $request->name,
-        ], 201);
+        $email = $request->email;
+
+        // Generate 6-digit OTP
+        $otp = rand(100000, 999999);
+
+        // Create or update the OTP record
+        EmailVerification::updateOrCreate(
+            ['email' => $email],
+            [
+                'otp' => $otp,
+                'verified' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        // Send OTP email (using Laravel mail)
+        Mail::raw("Your verification OTP is: $otp. It expires in 10 minutes.", function ($message) use ($email) {
+            $message->to($email)
+                    ->subject('Email Verification OTP');
+        });
+
+        return response()->json(['message' => 'OTP sent to your email.', 'email' => $email]);
 
         } catch (\Exception $e) {
             Log::error('Registration Error: ' . $e->getMessage());
@@ -183,6 +203,38 @@ class AuthenticationController extends Controller
                 'response_code' => 500,
                 'status'        => 'error',
                 'message'       => 'Failed to retrieve user data',
+            ], 500);
+        }
+    }
+
+    public function verifyToken()
+    {
+        try {
+            if (Auth::check()) {
+
+                return response()->json([
+                    'response_code' => 200,
+                    'status'        => 'success',
+                    'user_info'     => [
+                        'id'    => Auth::user()->id,
+                        'name'  => Auth::user()->name,
+                        'email' => Auth::user()->email,
+                    ],
+                ]);
+            }
+
+            return response()->json([
+                'response_code' => 401,
+                'status'        => 'error',
+                'message'       => 'User not authenticated',
+            ], 401);
+        } catch (\Exception $e) {
+            Log::error('Verify Error: ' . $e->getMessage());
+
+            return response()->json([
+                'response_code' => 500,
+                'status'        => 'error',
+                'message'       => 'An error occurred during Verifying token',
             ], 500);
         }
     }

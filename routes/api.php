@@ -20,6 +20,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('get-conversations', [ConversationController::class, 'getConversations'])->name('get-conversations');
     Route::get('get-messages/{id}', [ConversationController::class, 'getMessages'])->name('get-messages');
     Route::post('send-message', [MessageController::class, 'sendMessage'])->name('send-message');
+    Route::get('verify-user', [AuthenticationController::class, 'verifyToken'])->name('verify-user');
 });
 
 Route::post('/send-otp', [VerifyEmailController::class, 'sendOtp'])

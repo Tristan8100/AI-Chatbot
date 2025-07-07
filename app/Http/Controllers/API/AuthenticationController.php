@@ -74,7 +74,7 @@ class AuthenticationController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => 'required|email',
+            'email'    => 'required|email|exists:users,email',
             'password' => 'required|string',
         ]);
 
@@ -103,7 +103,7 @@ class AuthenticationController extends Controller
             return response()->json([
                 'response_code' => 401,
                 'status'        => 'error',
-                'message'       => 'Unauthorized',
+                'message'       => 'wrong email or password',
             ], 401);
 
         } catch (\Exception $e) {

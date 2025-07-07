@@ -17,14 +17,17 @@ class ResetPasswordController extends Controller
             'email' => 'required|email|exists:users,email',
         ]);
 
-        // Generate 6-digit OTP
-        $otp = rand(100000, 999999);
+        // Generate 6-digit OTP as string
+        $otp = (string) rand(100000, 999999);
+
+        // Hash OTP before saving
+        $hashedOtp = Hash::make($otp);
 
         // Create or update the OTP record
         PasswordReset::updateOrCreate(
             ['email' => $request->email],
             [
-                'code' => $otp,
+                'code_hash' => $hashedOtp,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]
@@ -53,8 +56,8 @@ class ResetPasswordController extends Controller
         // Fetch OTP record
         $record = PasswordReset::where('email', $email)->first();
 
-        if (!$record || trim((string)$record->code) !== trim((string)$otp)) {
-            return response()->json(['message' => 'Invalid OTP or email... ' . $record->code . ' not equal to ' . $otp . ' ' . $record->email . ' not equal to ' . $email], 400);
+        if (!$record || !Hash::check($otp, $record->code_hash)) {
+            return response()->json(['message' => 'Invalid OTP or email.'], 400);
         }
 
         // Check if the OTP is expired (10 minutes)

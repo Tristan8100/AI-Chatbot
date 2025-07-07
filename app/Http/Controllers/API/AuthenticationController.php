@@ -26,35 +26,36 @@ class AuthenticationController extends Controller
         ]);
 
         try {
-        User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+            $user = User::create([
+                'name'     => $request->name,
+                'email'    => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
 
-        $email = $request->email;
+            $email = $user->email;
 
-        // Generate 6-digit OTP
-        $otp = rand(100000, 999999);
+            // Generate 6-digit OTP as string
+            $otp = (string) rand(100000, 999999);
 
-        // Create or update the OTP record
-        EmailVerification::updateOrCreate(
-            ['email' => $email],
-            [
-                'otp' => $otp,
-                'verified' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        );
+            // Hash the OTP before saving
+            $hashedOtp = Hash::make($otp);
 
-        // Send OTP email (using Laravel mail)
-        Mail::raw("Your verification OTP is: $otp. It expires in 10 minutes.", function ($message) use ($email) {
-            $message->to($email)
-                    ->subject('Email Verification OTP');
-        });
+            // Create or update OTP record
+            EmailVerification::updateOrCreate(
+                ['email' => $email],
+                [
+                    'otp_hash' => $hashedOtp,
+                    'verified' => false,
+                ]
+            );
 
-        return response()->json(['message' => 'OTP sent to your email.', 'email' => $email]);
+            // Send OTP email (plaintext OTP)
+            Mail::raw("Your verification OTP is: $otp. It expires in 10 minutes.", function ($message) use ($email) {
+                $message->to($email)
+                        ->subject('Email Verification OTP');
+            });
+
+            return response()->json(['message' => 'OTP sent to your email.', 'email' => $email]);
 
         } catch (\Exception $e) {
             Log::error('Registration Error: ' . $e->getMessage());

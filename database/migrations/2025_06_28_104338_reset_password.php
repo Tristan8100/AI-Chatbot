@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
 
             $table->string('email')->index();
-            $table->unsignedInteger('code')->index();
+            $table->string('code_hash')->index();
             $table->string('token')->nullable();
 
             $table->timestamps();

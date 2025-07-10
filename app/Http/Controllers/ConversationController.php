@@ -22,13 +22,19 @@ class ConversationController extends Controller
     }
 
     public function getConversations(){
-        $value = Conversation::where('user_id', Auth::user()->id);
+         $userId = Auth::id();
+
+        $conversations = Conversation::where('user_id', $userId)
+            ->with(['messages' => function ($query) {
+                $query->latest()->limit(1); // only get the latest message per conversation
+            }])
+            ->get();
 
         return response()->json([
             'response_code' => 200,
             'status'        => 'success',
             'message'       => 'Conversations retrieved successfully',
-            'content'       => $value->get(),
+            'content'       => $conversations,
         ]);
     }
 

@@ -11,6 +11,8 @@ use Prism\Prism\Enums\Provider;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\Facades\Tool;
+use Illuminate\Support\Facades\Log;
+
 class MessageController extends Controller
 {
     public function sendMessage(Request $request)
@@ -51,20 +53,28 @@ class MessageController extends Controller
             return "The weather in {$city} is sunny and 72°F.";
         });
 
-        $userInfoTool = Tool::as('userInfo')
+       $userInfoTool = Tool::as('userInfo')
         ->for('Get authenticated user information')
         ->withStringParameter('user', 'The user to get information for')
-        ->using(function (string $user): string {
-            $user = Auth::user();
-            if (!$user) {
-                return 'No user is logged in.';
+        ->using(function (string $user): string {  //Change array to string
+            try {
+                if (!Auth::check()) {
+                    return json_encode(['error' => 'No authenticated user']); //Encode as JSON string
+                }
+
+                $user = Auth::user();
+                return json_encode([ //encode the response as a string
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ]);
+            } catch (\Exception $e) {
+                return json_encode(['error' => $e->getMessage()]); //Error as JSON string, just all json
             }
-            return "The user's name is {$user->name} and email is {$user->email}.";
         });
 
         try {
             $responseAI = Prism::text()
-                ->using(Provider::Groq, 'qwen-qwq-32b')
+                ->using(Provider::Groq, 'meta-llama/llama-4-scout-17b-16e-instruct')
                 ->withSystemPrompt('You are his friend, dont be mean and you should bre friendly and speak humanly, dont speak like an AI, use $userInfoTool to get user information, always address the user by their name.')
                 ->withMessages([
                     ...$structuredMessages,

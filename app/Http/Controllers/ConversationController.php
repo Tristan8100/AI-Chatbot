@@ -27,8 +27,7 @@ class ConversationController extends Controller
         $conversations = Conversation::where('user_id', $userId)
             ->with(['messages' => function ($query) {
                 $query->latest()->limit(1); // only get the latest message per conversation
-            }])
-            ->get();
+            }])->latest()->get();
 
         return response()->json([
             'response_code' => 200,

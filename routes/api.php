@@ -21,6 +21,9 @@ Route::middleware('auth:api')->group(function () {
     Route::get('get-messages/{id}', [ConversationController::class, 'getMessages'])->name('get-messages');
     Route::post('send-message', [MessageController::class, 'sendMessage'])->name('send-message');
     Route::get('verify-user', [AuthenticationController::class, 'verifyToken'])->name('verify-user');
+
+    Route::patch('update-conversation/{id}', [ConversationController::class, 'updateConversation']);
+    Route::delete('delete-conversation/{id}', [ConversationController::class, 'deleteConversation']);
 });
 
 Route::post('/send-otp', [VerifyEmailController::class, 'sendOtp'])

@@ -47,4 +47,45 @@ class ConversationController extends Controller
             'content'       => $value->messages()->get(),
         ]);
     }
+
+    public function updateConversation(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255'
+        ]);
+
+        $conversation = Conversation::where('id', $id)
+            ->where('user_id', Auth::user()->id)
+            ->firstOrFail();
+
+        $conversation->update([
+            'title' => $request->title
+        ]);
+
+        return response()->json([
+            'response_code' => 200,
+            'status'        => 'success',
+            'message'       => 'Conversation updated successfully',
+            'content'       => $conversation,
+        ]);
+    }
+
+    public function deleteConversation($id)
+    {
+        $conversation = Conversation::where('id', $id)
+            ->where('user_id', Auth::user()->id)
+            ->firstOrFail();
+
+        // Delete associated messages first if needed
+        $conversation->messages()->delete();
+        
+        $conversation->delete();
+
+        return response()->json([
+            'response_code' => 200,
+            'status'        => 'success',
+            'message'       => 'Conversation deleted successfully',
+            'content'       => null,
+        ]);
+    }
 }

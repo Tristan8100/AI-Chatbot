@@ -74,7 +74,7 @@ class MessageController extends Controller
 
         try {
             $responseAI = Prism::text()
-                ->using(Provider::Groq, 'meta-llama/llama-4-scout-17b-16e-instruct')
+                ->using(Provider::Gemini, 'gemini-2.0-flash') //Provider::Groq, 'meta-llama/llama-4-scout-17b-16e-instruct'
                 ->withSystemPrompt('You are his friend, dont be mean and you should bre friendly and speak humanly, dont speak like an AI, use $userInfoTool to get user information, always address the user by their name.')
                 ->withMessages([
                     ...$structuredMessages,

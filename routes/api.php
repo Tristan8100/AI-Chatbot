@@ -14,12 +14,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('get-user', [AuthenticationController::class, 'userInfo'])->name('get-user');
     Route::post('logout', [AuthenticationController::class, 'logOut'])->name('logout');
 
-    Route::get('get-user-info', [AuthenticationController::class, 'getuserdata'])->name('get-user-info');
+    Route::get('get-user-info', [AuthenticationController::class, 'getuserdata'])->name('get-user-info'); //middleware fro frontend
 
-    Route::post('new-conversation', [ConversationController::class, 'newconversation'])->name('new-conversation');
-    Route::get('get-conversations', [ConversationController::class, 'getConversations'])->name('get-conversations');
-    Route::get('get-messages/{id}', [ConversationController::class, 'getMessages'])->name('get-messages');
-    Route::post('send-message', [MessageController::class, 'sendMessage'])->name('send-message');
+    Route::post('new-conversation', [ConversationController::class, 'newconversation'])->name('new-conversation'); //executing new conversation when clicked
+    Route::get('get-conversations', [ConversationController::class, 'getConversations'])->name('get-conversations'); //list of conversation (sidebar)
+    Route::get('get-messages/{id}', [ConversationController::class, 'getMessages'])->name('get-messages'); //get messages of a conversation
+    Route::post('send-message', [MessageController::class, 'sendMessage'])->name('send-message'); //send message to a conversation and waits for the AI response
     Route::get('verify-user', [AuthenticationController::class, 'verifyToken'])->name('verify-user');
 
     Route::patch('update-conversation/{id}', [ConversationController::class, 'updateConversation']);
